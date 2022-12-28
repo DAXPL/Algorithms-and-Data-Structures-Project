@@ -14,29 +14,42 @@ Dodatkowe:
 #include <iostream>
 #include <vector>
 #include <string>
-#include "student.h"
+#include <random>
+#include <chrono>
+#include <ctime> 
+#include "DataStructures.h"
+
 #define tableSize 20
-#define howManyStudents 1000
+#define howManyNumbers 1000
+#define minAlbum 99
+#define maxAlbum 99990
 
 using namespace std;
 
 
-Student* students[tableSize];
+Ai* numbers[tableSize];
 
-int hashKey(int key, int size)
+int hashKey(double key, int size)
 {
-    return key%size;
+    int hashedKey = (key-minAlbum)/((maxAlbum-minAlbum)/size);
+    if(hashedKey>=size)
+    {
+        cout<<"OVERFLOW!"<<key<<"->"<<hashedKey<<endl;
+        hashedKey=size;
+    }
+    
+    return hashedKey;
 }
 void ClearTable()
 {
     for(int i=0; i<tableSize;i++)
     {
-        students[i]=NULL;
+        numbers[i]=NULL;
     }
 }
-Student* StudentPointer(int aNumber, bool& canAdd)
+Ai* StudentPointer(int aNumber, bool& canAdd)
 {
-    Student* p = students[hashKey(aNumber,tableSize)];
+    Ai* p = numbers[hashKey(aNumber,tableSize)];
 
     canAdd = true;
     if(p)
@@ -62,33 +75,32 @@ Student* StudentPointer(int aNumber, bool& canAdd)
     cout<<"Cant find student! Cell empty?"<<endl;
     return NULL;             
 }
-Student* NewRandomStudent()
+Ai* NewRandomEntry()
 {
-    Student* newRandomStudent= new Student;
-            newRandomStudent->name = "default name";
-            newRandomStudent->surname = "default surname";
-            newRandomStudent->number = rand()%999999+100000;
-            newRandomStudent->next = NULL;
-    return newRandomStudent;
+    Ai* newRandomEntry = new Ai;
+    int randomNumber = rand()+rand()+rand()+rand();
+    newRandomEntry->number = (double)(minAlbum+(randomNumber%(maxAlbum-minAlbum)));
+    newRandomEntry->next = NULL;
+    return newRandomEntry;
 }
 void FillTable(int howMany)
 {
     for(int i =0; i<howMany; i++)
     {
-        Student* newStudent = NewRandomStudent();
-        
+        Ai* newEntry = NewRandomEntry();
+
         bool canAdd = true;
-        Student* p = StudentPointer(newStudent->number,canAdd);
+        Ai* p = StudentPointer(newEntry->number,canAdd);
         
         if(canAdd)
         {
             if(!p)
             {
-                students[hashKey(newStudent->number,tableSize)] = newStudent;
+                numbers[hashKey(newEntry->number,tableSize)] = newEntry;
             }
             else
             {
-                p->next = newStudent;
+                p->next = newEntry;
             }
         }
         
@@ -99,37 +111,63 @@ void WriteOutTable()
     for(int i=0; i<tableSize;i++)
     {
         cout<<"Cell "<<i<<endl<<"["<<endl;
-        Student* p = students[i];
+        Ai* p = numbers[i];
         while(p)
         {
-            cout<<p->name<<" "<<p->surname<<" "<<p->number<<endl;
+            double k = p->number;
+            cout<<k<<endl;
             p = p->next;
         }
         cout<<"]"<<endl;
     }
 }
+void GetSmallestNumber()
+{
+    double ss = 0;
+    Ai* p = numbers[0];
+    for(int i=0; i<tableSize;i++)
+    {
+        p = numbers[i];
+        if(p)
+        { 
+            break;
+        }
+    }
+    ss = p->number;
+    while(p)
+    {
+        if((p->number)<ss)
+        {
+            ss=p->number;
+        }
+        p = p->next;
+    }
+    cout<<"Smallest"<<ss<<endl;
+    
+}
 int main()
 {
-    cout<<"START"<<endl;
+    cout<<"START"<<rand()<<"|"<<rand()<<endl;
     ClearTable();
     cout<<"Cleared"<<endl;
-    FillTable(howManyStudents);
+    FillTable(howManyNumbers);
     cout<<"Added all"<<endl;
     WriteOutTable();
     cout<<endl;
-    
+    GetSmallestNumber();
     //clearing memory
     for(int i=0;i<tableSize;i++)
     {
-        Student* p = students[i];
-        while(p = students[i])
+        Ai* p = numbers[i];
+        while(p = numbers[i])
         {
-            students[i] = p->next;
-            p->name="";
-            p->surname="";
+            numbers[i] = p->next;
             p->number=0;
             delete p;
         }
     }
+    
+    //double s = GetSmallestNumber();
+   // cout<<"Smallest number: "<<s<<endl;
     cout<<"End"<<endl;
 }
