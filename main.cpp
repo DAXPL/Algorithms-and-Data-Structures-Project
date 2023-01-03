@@ -10,28 +10,30 @@ Dodatkowe:
         https://www.youtube.com/watch?v=2_3fR-k-LzI
         https://eduinf.waw.pl/inf/alg/001_search/0067e.php (czym jest hashowanie)
 */
+
 #pragma once
 #include <iostream>
-#include <vector>
 #include <string>
 #include <random>
-#include <chrono>
-#include <ctime> 
+#include <fstream>
+#include <Windows.h>
 #include "DataStructures.h"
 
 #define tableSize 20
-#define howManyNumbers 1000
-#define minAlbum 99
-#define maxAlbum 99990
+#define maxNumers 100000
+#define minRandom 0.99
+#define maxRandom 999.99
 
 using namespace std;
 
-
 Ai* numbers[tableSize];
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_int_distribution<unsigned long long> dis(minRandom*100, maxRandom*100);
 
 int hashKey(double key, int size)
 {
-    int hashedKey = (key-minAlbum)/((maxAlbum-minAlbum)/size);
+    int hashedKey = (key-minRandom)/((maxRandom-minRandom)/size);
     if(hashedKey>=size)
     {
         cout<<"OVERFLOW!"<<key<<"->"<<hashedKey<<endl;
@@ -40,14 +42,22 @@ int hashKey(double key, int size)
     
     return hashedKey;
 }
+
 void ClearTable()
 {
-    for(int i=0; i<tableSize;i++)
+    for(int i=0;i<tableSize;i++)
     {
-        numbers[i]=NULL;
+        Ai* p = numbers[i];
+        while(p = numbers[i])
+        {
+            numbers[i] = p->next;
+            p->number=0;
+            delete p;
+        }
     }
 }
-Ai* StudentPointer(int aNumber, bool& canAdd)
+
+Ai* FindElement(int aNumber, bool& canAdd)
 {
     Ai* p = numbers[hashKey(aNumber,tableSize)];
 
@@ -58,8 +68,6 @@ Ai* StudentPointer(int aNumber, bool& canAdd)
         {
             if(p->number == aNumber)
             {
-                //Ten student jest już w tablicy
-                //TO-DO - przeładować == ? (porównanie imie, nazwisko i numer albumu)
                 canAdd = false;
                 return NULL;
                 cout<<"Wpis juz istnieje"<<endl;
@@ -72,25 +80,26 @@ Ai* StudentPointer(int aNumber, bool& canAdd)
         }
     }
 
-    cout<<"Cant find student! Cell empty?"<<endl;
+    //cout<<"Cant find number! Cell empty?"<<endl;
     return NULL;             
 }
+
 Ai* NewRandomEntry()
 {
     Ai* newRandomEntry = new Ai;
-    int randomNumber = rand()+rand()+rand()+rand();
-    newRandomEntry->number = (double)(minAlbum+(randomNumber%(maxAlbum-minAlbum)));
+    int randomNumber = dis(gen);
+    newRandomEntry->number = (double)randomNumber/100;
     newRandomEntry->next = NULL;
     return newRandomEntry;
 }
+
 void FillTable(int howMany)
 {
     for(int i =0; i<howMany; i++)
     {
-        Ai* newEntry = NewRandomEntry();
-
         bool canAdd = true;
-        Ai* p = StudentPointer(newEntry->number,canAdd);
+        Ai* newEntry = NewRandomEntry();
+        Ai* p = FindElement(newEntry->number,canAdd);
         
         if(canAdd)
         {
@@ -106,6 +115,7 @@ void FillTable(int howMany)
         
     }
 }
+
 void WriteOutTable()
 {
     for(int i=0; i<tableSize;i++)
@@ -121,19 +131,35 @@ void WriteOutTable()
         cout<<"]"<<endl;
     }
 }
-void GetSmallestNumber()
+
+double GetSmallestNumber(int& comparisons)
 {
     double ss = 0;
-    Ai* p = numbers[0];
+    comparisons = 0;
+    Ai* p = nullptr;
+
+    /*
+    Szukam pierwszej komórki która nie jest pusta - to w niej będą najmniejsze
+    wartości
+    */
     for(int i=0; i<tableSize;i++)
     {
+        comparisons++;
         p = numbers[i];
         if(p)
         { 
             break;
         }
     }
+
+    /*
+    Niech pierwsza liczba będzie na razie najmniejsza.
+    Potem iteruje po całej zawartości link listy szukając coraz to mniejszych
+    wartości ciągu ai.
+    Od razu też przesuwam wskaźnik - nie ma sensu sprawdzać go dwa razy
+    */
     ss = p->number;
+    p = p->next;
     while(p)
     {
         if((p->number)<ss)
@@ -141,33 +167,96 @@ void GetSmallestNumber()
             ss=p->number;
         }
         p = p->next;
+        comparisons++;
     }
-    cout<<"Smallest"<<ss<<endl;
+    cout<<"Smallest number: "<<ss<<" found in: "<<comparisons<<" comparisons"<<endl;
+    return ss;
     
 }
-int main()
+
+double GetLargestNumber(int& comparisons)
 {
-    cout<<"START"<<rand()<<"|"<<rand()<<endl;
-    ClearTable();
-    cout<<"Cleared"<<endl;
-    FillTable(howManyNumbers);
-    cout<<"Added all"<<endl;
-    WriteOutTable();
-    cout<<endl;
-    GetSmallestNumber();
-    //clearing memory
-    for(int i=0;i<tableSize;i++)
+    double max = 0;
+    comparisons = 0;
+    Ai* p = nullptr;
+
+    /*
+    Szukam ostatniej komórki która nie jest pusta - to w niej będą największe
+    wartości
+    */
+    for(int i=tableSize-1; i>=0;i--)
     {
-        Ai* p = numbers[i];
-        while(p = numbers[i])
-        {
-            numbers[i] = p->next;
-            p->number=0;
-            delete p;
+        comparisons++;
+        p = numbers[i];
+        if(p)
+        { 
+            break;
         }
     }
+
+    /*
+    Niech pierwsza liczba będzie na razie największa.
+    Potem iteruje po całej zawartości link listy szukając coraz to większych
+    wartości ciągu ai.
+    Od razu też przesuwam wskaźnik - nie ma sensu sprawdzać go dwa razy
+    */
+    max = p->number;
+    p = p->next;
+    while(p)
+    {
+        if((p->number)>max)
+        {
+            max=p->number;
+        }
+        p = p->next;
+        comparisons++;
+    }
+    cout<<"Largest number: "<<max<<" found in: "<<comparisons<<" comparisons"<<endl;
+    return max;
     
-    //double s = GetSmallestNumber();
-   // cout<<"Smallest number: "<<s<<endl;
+}
+
+void DoStuff(fstream& file,int& size)
+{
+    //srand((int) time(0));
+    ClearTable();
+    FillTable(size);
+    //WriteOutTable();
+    cout<<endl;
+
+    double smallest,largest;
+    int compS,compL;
+    smallest = GetSmallestNumber(compS);
+    largest = GetLargestNumber(compL);
+
+    if(file)
+    {
+        file<<size<<","<<compS<<","<<compL<<endl;
+    }
+    ClearTable();
+}
+
+int main()
+{
+    cout<<"START"<<endl;
+
+    fstream outputFile;
+    outputFile.open("data.csv", ios::out);
+    if(!outputFile)
+    {
+        cout<<"Failed to create file!"<<endl;
+    }
+
+    for(int i=10;i<=maxNumers;i+=10)
+    {
+        cout<<i<<" z "<<maxNumers<<endl;
+        DoStuff(outputFile,i); 
+    }
+
+
+    if(outputFile)
+    {
+        outputFile.close();
+    }
     cout<<"End"<<endl;
 }
