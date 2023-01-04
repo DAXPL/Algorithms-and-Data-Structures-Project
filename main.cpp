@@ -20,7 +20,8 @@ Dodatkowe:
 #include "DataStructures.h"
 
 #define tableSize 20
-#define maxNumers 100000
+#define maxNumers 10000
+#define measurements 25
 #define minRandom 0.99
 #define maxRandom 999.99
 
@@ -29,7 +30,7 @@ using namespace std;
 Ai* numbers[tableSize];
 std::random_device rd;
 std::mt19937 gen(rd());
-std::uniform_int_distribution<unsigned long long> dis(minRandom*100, maxRandom*100);
+std::uniform_int_distribution<unsigned int> dis(minRandom*100, maxRandom*100);
 
 int hashKey(double key, int size)
 {
@@ -37,7 +38,7 @@ int hashKey(double key, int size)
     if(hashedKey>=size)
     {
         cout<<"OVERFLOW!"<<key<<"->"<<hashedKey<<endl;
-        hashedKey=size;
+        hashedKey=size-1;
     }
     
     return hashedKey;
@@ -74,9 +75,9 @@ Ai* FindElement(int aNumber, bool& canAdd)
             }
             if(!p->next)
             {
-                return p;//doszlismy do końca tablicy jednokierunkowej - p to element do którego dopiszemy
+                return p;//doszlismy do końca listy jednokierunkowej
             }
-            p = p->next;//jeszcze nie ma końca tablicy
+            p = p->next;//jeszcze nie ma końca listy
         }
     }
 
@@ -87,8 +88,7 @@ Ai* FindElement(int aNumber, bool& canAdd)
 Ai* NewRandomEntry()
 {
     Ai* newRandomEntry = new Ai;
-    int randomNumber = dis(gen);
-    newRandomEntry->number = (double)randomNumber/100;
+    newRandomEntry->number = (double)dis(gen)/100.0;
     newRandomEntry->next = NULL;
     return newRandomEntry;
 }
@@ -169,7 +169,7 @@ double GetSmallestNumber(int& comparisons)
         p = p->next;
         comparisons++;
     }
-    cout<<"Smallest number: "<<ss<<" found in: "<<comparisons<<" comparisons"<<endl;
+    //cout<<"Smallest number: "<<ss<<" found in: "<<comparisons<<" comparisons"<<endl;
     return ss;
     
 }
@@ -211,28 +211,22 @@ double GetLargestNumber(int& comparisons)
         p = p->next;
         comparisons++;
     }
-    cout<<"Largest number: "<<max<<" found in: "<<comparisons<<" comparisons"<<endl;
+    //cout<<"Largest number: "<<max<<" found in: "<<comparisons<<" comparisons"<<endl;
     return max;
     
 }
 
-void DoStuff(fstream& file,int& size)
+void DoStuff(fstream& file,int& size, int&compS, int& compL)
 {
     //srand((int) time(0));
     ClearTable();
     FillTable(size);
     //WriteOutTable();
-    cout<<endl;
+    //cout<<endl;
 
     double smallest,largest;
-    int compS,compL;
     smallest = GetSmallestNumber(compS);
     largest = GetLargestNumber(compL);
-
-    if(file)
-    {
-        file<<size<<","<<compS<<","<<compL<<endl;
-    }
     ClearTable();
 }
 
@@ -247,10 +241,31 @@ int main()
         cout<<"Failed to create file!"<<endl;
     }
 
-    for(int i=10;i<=maxNumers;i+=10)
+    for(int i=10;i<=maxNumers;i+=50)
     {
-        cout<<i<<" z "<<maxNumers<<endl;
-        DoStuff(outputFile,i); 
+        cout<<i<<" z "<<maxNumers;
+        double compSmMed =0;
+        double compLgMed =0;
+        for(int j=0;j<measurements;j++)
+        {
+            cout<<".";
+            int compSm, compLg;
+            DoStuff(outputFile,i,compSm,compLg);
+
+            compSmMed+=compSm;
+            compLgMed+=compLg;
+        }
+
+        //wyznaczanie średniej z sumy porównań
+        compSmMed/=measurements;
+        compLgMed/=measurements;
+
+        if(outputFile)
+        {
+            outputFile<<i<<","<<compSmMed<<","<<compLgMed<<endl;
+        }  
+         
+        cout<<endl;    
     }
 
 
