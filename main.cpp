@@ -19,15 +19,17 @@ Dodatkowe:
 #include <Windows.h>
 #include "DataStructures.h"
 
-#define tableSize 20
-#define maxNumers 10000
-#define measurements 25
+//#define tableSize 20
+#define maxNumers 100
+#define measurements 100
 #define minRandom 0.99
 #define maxRandom 999.99
 
 using namespace std;
 
-Ai* numbers[tableSize];
+int tableSize = 10;
+Ai** numbers;// = new Ai*[tableSize];
+//Ai* numbers[tableSize];
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_int_distribution<unsigned int> dis(minRandom*100, maxRandom*100);
@@ -44,35 +46,36 @@ int hashKey(double key, int size)
     return hashedKey;
 }
 
-void ClearTable()
+void PrepareTable()
 {
     for(int i=0;i<tableSize;i++)
     {
-        Ai* p = numbers[i];
-        while(p = numbers[i])
-        {
-            numbers[i] = p->next;
-            p->number=0;
-            delete p;
-        }
+        numbers[i]=NULL;
     }
 }
 
-Ai* FindElement(int aNumber, bool& canAdd)
+void ClearTable()
+{
+    for(int i=0;i<tableSize;i++)
+    {   
+        //Ai* p = numbers[i];
+        Ai* p = NULL;
+        while(p = numbers[i])
+        {
+            numbers[i] = p->next;
+            delete p; 
+        }   
+    }
+}
+
+Ai* FindElement(int aNumber)
 {
     Ai* p = numbers[hashKey(aNumber,tableSize)];
 
-    canAdd = true;
     if(p)
     {
         while (true)
         {
-            if(p->number == aNumber)
-            {
-                canAdd = false;
-                return NULL;
-                cout<<"Wpis juz istnieje"<<endl;
-            }
             if(!p->next)
             {
                 return p;//doszlismy do końca listy jednokierunkowej
@@ -81,7 +84,7 @@ Ai* FindElement(int aNumber, bool& canAdd)
         }
     }
 
-    //cout<<"Cant find number! Cell empty?"<<endl;
+    //komórka jest pusta
     return NULL;             
 }
 
@@ -97,20 +100,16 @@ void FillTable(int howMany)
 {
     for(int i =0; i<howMany; i++)
     {
-        bool canAdd = true;
         Ai* newEntry = NewRandomEntry();
-        Ai* p = FindElement(newEntry->number,canAdd);
-        
-        if(canAdd)
+        Ai* p = FindElement(newEntry->number);
+
+        if(p)
         {
-            if(!p)
-            {
-                numbers[hashKey(newEntry->number,tableSize)] = newEntry;
-            }
-            else
-            {
-                p->next = newEntry;
-            }
+            p->next = newEntry;  
+        }
+        else
+        {
+            numbers[hashKey(newEntry->number,tableSize)] = newEntry;
         }
         
     }
@@ -218,8 +217,8 @@ double GetLargestNumber(int& comparisons)
 
 void DoStuff(fstream& file,int& size, int&compS, int& compL)
 {
-    //srand((int) time(0));
     ClearTable();
+    
     FillTable(size);
     //WriteOutTable();
     //cout<<endl;
@@ -234,44 +233,62 @@ int main()
 {
     cout<<"START"<<endl;
 
-    fstream outputFile;
+    fstream outputFile; 
     outputFile.open("data.csv", ios::out);
     if(!outputFile)
     {
         cout<<"Failed to create file!"<<endl;
+        return 0;
     }
 
-    for(int i=10;i<=maxNumers;i+=50)
+    for(int z=1;z<=10;z++)//pomiary dla różnych rozmiarów tablicy hashującej
     {
-        cout<<i<<" z "<<maxNumers;
-        double compSmMed =0;
-        double compLgMed =0;
-        for(int j=0;j<measurements;j++)
-        {
-            cout<<".";
-            int compSm, compLg;
-            DoStuff(outputFile,i,compSm,compLg);
+        tableSize = 10*z;
+        numbers = new Ai*[tableSize];
+        PrepareTable();
 
-            compSmMed+=compSm;
-            compLgMed+=compLg;
+        //outputFile<<tableSize<<" dlugosc tablicy, sr por min, sr por max, sr"<<endl;
+        outputFile<<"Długość tablicy: "<<tableSize<<endl;
+        cout<<"Seria "<<z<<" dla rozmiaru tablicy: "<<tableSize<<endl;
+        for(int i=10;i<=maxNumers;i+=10)//pomiary dla różnych długości ciągu a
+        {
+            cout<<i<<" z "<<maxNumers;
+            double compSmMed =0;
+            double compLgMed =0;
+            double compMed =0;
+            for(int j=0;j<measurements;j++)//powtórzenia dla uśrednienia
+            {
+                cout<<".";
+                int compSm =0;
+                int compLg =0;
+                DoStuff(outputFile,i,compSm,compLg);
+
+                compSmMed+=compSm;
+                compLgMed+=compLg;
+            }
+
+            //wyznaczanie średniej z sumy porównań
+            compMed += compSmMed + compLgMed;
+            compSmMed/=measurements;
+            compLgMed/=measurements;
+            compMed/=2*measurements;
+
+            if(outputFile)
+            {
+                //outputFile<<i<<","<<compSmMed<<","<<compLgMed<<","<<compMed<<endl;
+                outputFile<<i<<", "<<compMed<<endl;
+            }  
+            
+            cout<<endl;    
         }
-
-        //wyznaczanie średniej z sumy porównań
-        compSmMed/=measurements;
-        compLgMed/=measurements;
-
-        if(outputFile)
-        {
-            outputFile<<i<<","<<compSmMed<<","<<compLgMed<<endl;
-        }  
-         
-        cout<<endl;    
     }
+   
 
 
     if(outputFile)
     {
         outputFile.close();
     }
+    delete[] numbers;
     cout<<"End"<<endl;
 }
