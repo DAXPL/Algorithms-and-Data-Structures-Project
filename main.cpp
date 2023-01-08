@@ -19,27 +19,29 @@ Dodatkowe:
 #include <Windows.h>
 #include "DataStructures.h"
 
-//#define tableSize 20
-#define maxNumers 100
+#define bufforSize 4096
+#define maxNumers 1000
 #define measurements 100
 #define minRandom 0.99
 #define maxRandom 999.99
 
 using namespace std;
 
+char fBuf[4096];
+
 int tableSize = 10;
-Ai** numbers;// = new Ai*[tableSize];
-//Ai* numbers[tableSize];
+Ai** numbers;
+
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_int_distribution<unsigned int> dis(minRandom*100, maxRandom*100);
 
 int hashKey(double key, int size)
 {
-    int hashedKey = (key-minRandom)/((maxRandom-minRandom)/size);
+    int hashedKey = round((key-minRandom)/((maxRandom-minRandom)/size));//round down
+    
     if(hashedKey>=size)
     {
-        cout<<"OVERFLOW!"<<key<<"->"<<hashedKey<<endl;
         hashedKey=size-1;
     }
     
@@ -234,6 +236,7 @@ int main()
     cout<<"START"<<endl;
 
     fstream outputFile; 
+    outputFile.rdbuf()->pubsetbuf(fBuf,bufforSize);
     outputFile.open("data.csv", ios::out);
     if(!outputFile)
     {
@@ -241,14 +244,13 @@ int main()
         return 0;
     }
 
-    for(int z=1;z<=10;z++)//pomiary dla różnych rozmiarów tablicy hashującej
+    for(int z=1;z<=5;z++)//pomiary dla różnych rozmiarów tablicy hashującej
     {
         tableSize = 10*z;
         numbers = new Ai*[tableSize];
         PrepareTable();
 
         //outputFile<<tableSize<<" dlugosc tablicy, sr por min, sr por max, sr"<<endl;
-        outputFile<<"Długość tablicy: "<<tableSize<<endl;
         cout<<"Seria "<<z<<" dla rozmiaru tablicy: "<<tableSize<<endl;
         for(int i=10;i<=maxNumers;i+=10)//pomiary dla różnych długości ciągu a
         {
@@ -275,8 +277,8 @@ int main()
 
             if(outputFile)
             {
-                //outputFile<<i<<","<<compSmMed<<","<<compLgMed<<","<<compMed<<endl;
-                outputFile<<i<<", "<<compMed<<endl;
+                //rozmiar tablicy, długość ciągu, średnia porównań
+                outputFile<<tableSize<<", "<<i<<", "<<compMed<<endl;
             }  
             
             cout<<endl;    
