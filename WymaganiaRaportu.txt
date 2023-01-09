@@ -1,0 +1,18 @@
+1.Raport należy wysłać 2-3 dni przed dniem prezentacji
+2.Kod źródłowy z komentarzami jako załącznik do raportu
+3.Struktura raportu:
+    a)5-6 stron
+    b)Wstęp 1-1,5 strony. Opisać co jest przedmiotem projektu, podać w sposób 
+    ogólny na  czym polega rozwiązywany problem oraz efektywność od strony 
+    toretycznej. Cel projektu.
+    c)Metodyka. Jakie zastosowano metody, struktury danych, rodzaje danych oraz
+    język programowania. 2-2,5 strony.
+    d)Wyniki projektu. POtwierdzenie że implementacja działa poprawnie.
+    Opracowanie w formie graficznej. Jeśli zastosowano niestandardowy algorytm,
+    wtedy należy wskazać na różnicze oraz ich konsekwencje. 2-3 strony.
+    e)Wnioski. 2,3 punkty. Czy problem został rozwiązany. 
+    Jak się ma uzyskana efektywność do przewidywań teoretycznych.
+4.WYkres:
+    oś x - rozmiar danych logn
+    oś y - ilość operacji charakterystycznych
+    Dokonać regresji liniowej - punkt przecięcia i nachylenie

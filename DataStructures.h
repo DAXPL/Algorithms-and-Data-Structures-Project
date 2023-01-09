@@ -2,8 +2,9 @@
 #include <vector>
 #include <string>
 using namespace std;
+//Struktura wyrazu ciągu
 struct Ai
 {
-    Ai* next;
-    double number;
+    Ai* next;//następnik
+    double number;//wartość własna
 };
