@@ -20,11 +20,11 @@ Dodatkowe:
 #include "DataStructures.h"
 
 #define bufforSize 4096//bufor zapisu
-#define maxNumers 10000//największa długość ciągu ai
-#define measurements 500//ilość pomiarów uśredniających
-#define tables 10//ilość rozwarzanych rozmiarów tablic
-#define minRandom 0.99
-#define maxRandom 999.99
+#define maxNumers 100//największa długość ciągu ai
+#define measurements 100//ilość pomiarów uśredniających
+#define tables 20//ilość rozwarzanych rozmiarów tablic
+#define minRandom 99
+#define maxRandom 99999
 
 using namespace std;
 
@@ -35,13 +35,12 @@ Ai** numbers;
 
 std::random_device rd;
 std::mt19937 gen(rd());
-std::uniform_int_distribution<unsigned int> dis(minRandom*100, maxRandom*100);
+std::uniform_int_distribution<unsigned int> dis(minRandom, maxRandom);
 
 //Funkcja hashująca podany klucz, dla zadanego rozmiaru tablicy
-int hashKey(double key, int size)
+int hashKey(int key, int size)
 {
-    int hashedKey = round((key-minRandom)/((maxRandom-minRandom)/size));//round down
-    
+    int hashedKey = (key-minRandom)/((maxRandom-minRandom)/size);
     if(hashedKey>=size)
     {
         hashedKey=size-1;
@@ -55,7 +54,7 @@ void PrepareTable()
 {
     for(int i=0;i<tableSize;i++)
     {
-        numbers[i]=NULL;
+        numbers[i]=nullptr;
     }
 }
 
@@ -65,44 +64,48 @@ void ClearTable()
     for(int i=0;i<tableSize;i++)
     {   
         //Czyszczenie listy jednokierunkowej
-        Ai* p = NULL;
-        while(p = numbers[i])
+        Ai* p = numbers[i];
+        while(p != nullptr)
         {
-            numbers[i] = p->next;
+            Ai* temp = p->next;
             delete p; 
+            p = temp;
         } 
-        numbers[i]=NULL;  
+        numbers[i]=nullptr;  
     }
 }
 
 //Wyszukanie ostatniego elementu w liście jednokierunkowej
 Ai* FindElement(int aNumber)
 {
-    Ai* p = numbers[hashKey(aNumber,tableSize)];
+    int cell = hashKey(aNumber,tableSize);
+    Ai* p = numbers[cell];
 
     if(p)
     {
         while (true)
-        {
-            if(!p->next)
+        {   
+            Ai* next = p->next;
+
+            if(next==nullptr)
             {
                 return p;//doszlismy do końca listy jednokierunkowej
             }
-            p = p->next;//jeszcze nie ma końca listy
+            p = next;//jeszcze nie ma końca listy                
         }
     }
 
     //komórka jest pusta
-    return NULL;             
+    return nullptr;             
 }
 
 //Generowanie losowego elementu ciągu
 Ai* NewRandomEntry()
 {
     Ai* newRandomEntry = new Ai;
-    //losowanie liczby w zakresie 99..99999 i dopasowanie do wymaganego zakresu
-    newRandomEntry->number = (double)dis(gen)/100.0;
-    newRandomEntry->next = NULL;
+    //losowanie liczby w zakresie 100 razy większym
+    newRandomEntry->number = dis(gen);
+    newRandomEntry->next = nullptr;
     return newRandomEntry;
 }
 
@@ -137,8 +140,7 @@ void WriteOutTable()
         Ai* p = numbers[i];
         while(p)
         {
-            double k = p->number;
-            cout<<k<<endl;
+            cout<<p->GetDoubleValue()<<endl;
             p = p->next;
         }
         cout<<"]"<<endl;
@@ -147,10 +149,10 @@ void WriteOutTable()
 }
 
 //Funkcja wyszukująca najmniejszy element w tablicy
-double GetSmallestNumber(int& comparisons)
+int GetSmallestNumber(int& comparisons)
 {
     //Przygotowanie do wyszukiwania
-    double ss = 0; //Najmniejsza liczba
+    int ss = 0; //Najmniejsza liczba
     comparisons = 0;
     Ai* p = nullptr;
 
@@ -198,10 +200,10 @@ double GetSmallestNumber(int& comparisons)
 }
 
 //Funkcja wyszukująca największy element w tablicy
-double GetLargestNumber(int& comparisons)
+int GetLargestNumber(int& comparisons)
 {
     //Przygotowanie do wyszukiwania
-    double max = 0; //największa liczba
+    int max = 0; //największa liczba
     comparisons = 0;
     Ai* p = nullptr;
 
@@ -220,7 +222,7 @@ double GetLargestNumber(int& comparisons)
     }
 
     //zabezpieczenie na wypadek pustej listy
-    if(p==NULL)
+    if(p==nullptr)
     {
         cout<<"List is empty!"<<endl;
         return -1;
@@ -256,7 +258,7 @@ void SeriesOfMeasurements(fstream& file,int& size, int&compS, int& compL)
     FillTable(size);
     //WriteOutTable();
 
-    double smallest,largest;
+    int smallest,largest;
     smallest = GetSmallestNumber(compS);
     largest = GetLargestNumber(compL);
     ClearTable();//???
@@ -320,6 +322,7 @@ int main()
             //cout<<endl;    
         }
     }
+    cout<<"Cleaning"<<endl;
 
     //Kończenie i zwalnianie pamięci
     if(outputFile)

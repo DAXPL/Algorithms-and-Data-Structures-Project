@@ -6,5 +6,13 @@ using namespace std;
 struct Ai
 {
     Ai* next;//następnik
-    double number;//wartość własna
+    int number;//wartość własna
+    //ze względu na znaczną ilość komplikacji z obliczeniami zmiennoprzecinkowymi
+    //dlatego przechowuję liczbę jako int i tylko przy wpisywaniu do wyników
+    //dzielę przez 100
+    double GetDoubleValue()
+    {
+        int dd = number;
+        return dd/100;
+    }
 };
