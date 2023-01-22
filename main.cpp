@@ -20,9 +20,9 @@ Dodatkowe:
 #include "DataStructures.h"
 
 #define bufforSize 4096//bufor zapisu
-#define maxNumers 100//największa długość ciągu ai
+#define maxNumers 10000//największa długość ciągu ai
 #define measurements 100//ilość pomiarów uśredniających
-#define tables 20//ilość rozwarzanych rozmiarów tablic
+#define tables 100//ilość rozwarzanych rozmiarów tablic
 #define minRandom 99
 #define maxRandom 99999
 
@@ -285,17 +285,20 @@ int main()
         tableSize = 10*z;
         numbers = new Ai*[tableSize];
         PrepareTable();
-
-        cout<<"Seria "<<z<<" dla rozmiaru tablicy: "<<tableSize<<endl;
-        for(int i=10;i<=maxNumers;i*=10)//pomiary dla różnych długości ciągu a
+        //Bufor dla zaoszczędzenia operacji na dysku
+        string buffer ="";
+        cout<<"Tablica "<<z<<" z "<<tables<<" dla rozmiaru tablicy: "<<tableSize<<endl;
+        for(int i=100;i<=maxNumers;i+=100)//pomiary dla różnych długości ciągu a
         {
             //cout<<i<<" z "<<maxNumers;
+            cout<<".";
             double compSmMed =0; //Średnia porównań dla najmniejszego elementu
             double compLgMed =0; //Średnia porównań dla największego elementu
             double compMed =0;
 
             for(int j=0;j<measurements;j++)//powtórzenia dla uśrednienia
             {
+                //cout<<".";
                 //porównania dla tej seii pomiarów
                 int compSm =0; 
                 int compLg =0;
@@ -314,13 +317,18 @@ int main()
             compLgMed/=measurements;
             compMed/=2*measurements;
 
-            if(outputFile)
-            {
-                //rozmiar tablicy, długość ciągu, średnia porównań
-                outputFile<<tableSize<<"\t"<<i<<"\t"<<compMed<<endl;
-            }  
-            //cout<<endl;    
+            buffer+=to_string(tableSize)+'\t'+to_string(i)+'\t'+to_string(compMed)+'\n';
+            //cout<<endl;   
         }
+        
+        //zrzut bufora
+        if(outputFile)
+        {
+            //rozmiar tablicy, długość ciągu, średnia porównań
+            outputFile<<buffer;
+        }  
+        buffer="";
+        cout<<endl;
     }
     cout<<"Cleaning"<<endl;
 
