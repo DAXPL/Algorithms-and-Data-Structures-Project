@@ -2,13 +2,9 @@
 Autor:  Miłosz Klim
 Temat:  wyszukanie najmniejszego/największego elementu ciągu {ai} 
         zapisanego w tablicy z haszowaniem, jeżeli 0.99 ≤ ai ≤999.99
-Proponowane rozwiązanie:
-        bucket hashing (porcjowanie)
-Źródła:
-        https://eduinf.waw.pl/inf/alg/001_search/0099a.php
-Dodatkowe:
-        https://www.youtube.com/watch?v=2_3fR-k-LzI
-        https://eduinf.waw.pl/inf/alg/001_search/0067e.php (czym jest hashowanie)
+Raport: https://docs.google.com/document/d/13AuJS6q6y8fLJA3nfzF6Dw_qG3q2HtsQQ4a_-tdXWtw/edit?usp=sharing
+Dane:   https://docs.google.com/spreadsheets/d/1pn1ZBARtU50h_uiB4q4HI5zPUk0zBuFkXefsDagFy8g/edit?usp=sharing
+Repozytorium:   https://github.com/DAXPL/Algorithms-and-Data-Structures-Project
 */
 
 #pragma once
@@ -19,10 +15,10 @@ Dodatkowe:
 #include <Windows.h>
 #include "DataStructures.h"
 
-#define bufforSize 4096//bufor zapisu
-#define maxNumers 10000//największa długość ciągu ai
-#define measurements 100//ilość pomiarów uśredniających
-#define tables 100//ilość rozwarzanych rozmiarów tablic
+#define bufforSize 4096     //bufor zapisu
+#define maxNumers 10000     //największa długość ciągu ai
+#define measurements 100    //ilość pomiarów uśredniających
+#define tables 100          //ilość rozważanych rozmiarów tablic
 #define minRandom 99
 #define maxRandom 99999
 
@@ -37,7 +33,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_int_distribution<unsigned int> dis(minRandom, maxRandom);
 
-//Funkcja hashująca podany klucz, dla zadanego rozmiaru tablicy
+//Funkcja haszująca podany klucz, dla zadanego rozmiaru tablicy
 int hashKey(int key, int size)
 {
     int hashedKey = (key-minRandom)/((maxRandom-minRandom)/size);
@@ -103,7 +99,6 @@ Ai* FindElement(int aNumber)
 Ai* NewRandomEntry()
 {
     Ai* newRandomEntry = new Ai;
-    //losowanie liczby w zakresie 100 razy większym
     newRandomEntry->number = dis(gen);
     newRandomEntry->next = nullptr;
     return newRandomEntry;
@@ -179,8 +174,8 @@ int GetSmallestNumber(int& comparisons)
 
     /*
     Niech pierwsza liczba będzie na razie najmniejsza.
-    Potem iteruje po całej zawartości link listy szukając coraz to mniejszych
-    wartości ciągu ai.
+    Potem iteruje po całej zawartości listy szukając coraz to mniejszych
+    wartości.
     Od razu też przesuwam wskaźnik - nie ma sensu sprawdzać go dwa razy
     */
     ss = p->number;
@@ -194,9 +189,7 @@ int GetSmallestNumber(int& comparisons)
         p = p->next;
         comparisons++;
     }
-    //cout<<"Smallest number: "<<ss<<" found in: "<<comparisons<<" comparisons"<<endl;
-    return ss;
-    
+    return ss;  
 }
 
 //Funkcja wyszukująca największy element w tablicy
@@ -230,8 +223,8 @@ int GetLargestNumber(int& comparisons)
 
     /*
     Niech pierwsza liczba będzie na razie największa.
-    Potem iteruje po całej zawartości link listy szukając coraz to większych
-    wartości ciągu ai.
+    Potem iteruje po całej zawartości listy szukając coraz to większych
+    wartości.
     Od razu też przesuwam wskaźnik - nie ma sensu sprawdzać go dwa razy
     */
     max = p->number;
@@ -245,9 +238,7 @@ int GetLargestNumber(int& comparisons)
         p = p->next;
         comparisons++;
     }
-    //cout<<"Largest number: "<<max<<" found in: "<<comparisons<<" comparisons"<<endl;
-    return max;
-    
+    return max; 
 }
 
 //Jedna seria pomiarów dla zadanego rozmiaru tablicy i ciągu
@@ -256,12 +247,11 @@ void SeriesOfMeasurements(fstream& file,int& size, int&compS, int& compL)
     ClearTable();
     
     FillTable(size);
-    //WriteOutTable();
 
-    int smallest,largest;
-    smallest = GetSmallestNumber(compS);
-    largest = GetLargestNumber(compL);
-    ClearTable();//???
+    GetSmallestNumber(compS);
+    GetLargestNumber(compL);
+
+    ClearTable();
 }
 
 //Główna pętla programu
@@ -279,8 +269,8 @@ int main()
         return 0;
     }
     outputFile<<"Rozmiar tablicy\tDlugosc ciagu\tOperacje"<<endl;
-    //Seria pomiarów
-    for(int z=1;z<=tables;z++)//pomiary dla różnych rozmiarów tablicy hashującej
+
+    for(int z=1;z<=tables;z++)//pomiary dla różnych rozmiarów tablicy haszującej
     {
         tableSize = 10*z;
         numbers = new Ai*[tableSize];
@@ -290,23 +280,20 @@ int main()
         cout<<"Tablica "<<z<<" z "<<tables<<" dla rozmiaru tablicy: "<<tableSize<<endl;
         for(int i=100;i<=maxNumers;i+=100)//pomiary dla różnych długości ciągu a
         {
-            //cout<<i<<" z "<<maxNumers;
-            cout<<".";
             double compSmMed =0; //Średnia porównań dla najmniejszego elementu
             double compLgMed =0; //Średnia porównań dla największego elementu
-            double compMed =0;
+            double compMed =0;   //Średnia porównań
 
             for(int j=0;j<measurements;j++)//powtórzenia dla uśrednienia
             {
-                //cout<<".";
-                //porównania dla tej seii pomiarów
+                //porównania dla tej serii pomiarów
                 int compSm =0; 
                 int compLg =0;
 
                 //Wykonanie serii pomiarów
                 SeriesOfMeasurements(outputFile,i,compSm,compLg);
 
-                //Zsumowanie liczby operacji
+                //Sumowanie liczby operacji
                 compSmMed+=compSm;
                 compLgMed+=compLg;
             }
@@ -330,14 +317,17 @@ int main()
         buffer="";
         cout<<endl;
     }
+    
+    //Kończenie i zwalnianie pamięci
     cout<<"Cleaning"<<endl;
 
-    //Kończenie i zwalnianie pamięci
     if(outputFile)
     {
         outputFile.close();
     }
     ClearTable();
     delete[] numbers;
-    cout<<"End"<<endl;
+
+    cout<<"END"<<endl;
+    return 0;
 }
